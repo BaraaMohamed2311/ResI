@@ -11,7 +11,8 @@ const path =require("path");
 const server = createServer(app); 
 const io = new Server(server, {
   cors: {
-    origin: '*'
+    origin: '*',
+    methods:  ["GET", "POST", "PUT", "DELETE"],
   }
 });
 

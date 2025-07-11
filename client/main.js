@@ -1,5 +1,5 @@
 
-const socket = io('http://localhost:5500'); 
+const socket = io('https://res-qk9u8y2yb-baraamohamed2311s-projects.vercel.app'); 
 const widthInput = document.getElementById("width"); 
 const heightInput = document.getElementById("height"); 
 const resizeBtn = document.getElementById("resize"); 
@@ -38,7 +38,7 @@ function submitForm(e, width, height , image_file) {
     formData.append("width", width);
     formData.append("height", height);
 
-    fetch("https://res-i-zbbe.vercel.app/upload_files", {
+    fetch("https://res-qk9u8y2yb-baraamohamed2311s-projects.vercel.app/upload_files", {
         method: 'POST',
         body:formData,
         mode: 'cors',
