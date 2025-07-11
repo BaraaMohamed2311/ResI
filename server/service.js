@@ -1,8 +1,6 @@
 
 
-const { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
-
-
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
   const UploadToS3 = async (key,image, bucket , resize) => {
 

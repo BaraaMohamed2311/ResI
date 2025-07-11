@@ -4,8 +4,17 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const { UploadToS3 } = require("./service");
 const app = express();
+const { createServer } = require('node:http');
+const { Server } = require('socket.io');
 const upload = multer();
 const path =require("path");
+const server = createServer(app); 
+const io = new Server(server, {
+  cors: {
+    origin: '*'
+  }
+});
+
 dotenv.config();
 app.use(cors());
 app.use(express.json());
@@ -33,6 +42,28 @@ app.route("/upload_files").post(upload.single('image'),async (req, res) => {
 
 });
 
-app.listen(PORT, () => {
+
+// Handle client connections
+io.on('connection', (socket) => {
+  console.log('A client connected:', socket.id);
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+app.route("/sns").post((req, res) => {
+
+  if(req.success) {
+    io.emit('snsNotification', { message: 'image resized successfully', success:true});
+  }
+  else{
+    io.emit('snsNotification', { message: 'image resized failed', success:false});
+  }
+  
+  
+});
+
+server.listen(PORT, () => {
   console.log("Server is running on port", PORT);
 })
