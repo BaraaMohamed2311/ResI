@@ -6,14 +6,15 @@ const resizeBtn = document.getElementById("resize");
 const uploadImg = document.getElementById("fileInput");
 const beforeImg = document.getElementById("beforeImage");
 const afterImg = document.getElementById("afterImage");
-
+const spinner = document.getElementById("spinner");
+const message = document.getElementById("message");
 let bucket = null; 
 let key = null;
 let image_file = null;
 resizeBtn.onclick = (e) => {
     const width = parseInt(widthInput.value);
     const height = parseInt(heightInput.value);
-    console.log("Width:", width, "Height:", height);
+
     if (width  && height  && image_file) {
         submitForm(e, width, height , image_file);
     } else {
@@ -29,7 +30,7 @@ uploadImg.onchange = (e) => {
 if (file) {
     const objectURL = URL.createObjectURL(file);
     beforeImg.setAttribute("src", objectURL);
-    console.log("Selected file:", objectURL);
+
 }
 }
 
@@ -45,10 +46,11 @@ function submitForm(e, width, height , image_file) {
         body:formData,
         mode: 'cors',
     })
-        .then((res) => res.json).then((data) => {
+        .then((res) => res.json()).then((data) => {
+            console.log("Response from server:", data);
             bucket = data.bucket;
             key = data.key;
-            
+            spinner.style.display = "block"; 
 
         })
         .catch((err) => console.log("Error occured", err));
@@ -56,14 +58,15 @@ function submitForm(e, width, height , image_file) {
 
 
 socket.on('snsNotification', (data) => {
-  console.log('Received SNS notification:', data);
-    if (data.success) {
-        console.log(`https://${bucket}.s3.amazonaws.com/${imgPath}`);
-        const resizedImageUrl = `https://${bucket}.s3.amazonaws.com/${imgPath}`;
-        console.log(data.message);
-        
+
+    if (data.success && bucket && key) {
+
+        const resizedImageUrl = `https://${bucket}.s3.amazonaws.com/${key}`;
         afterImg.setAttribute("src", resizedImageUrl);
-    } else {
-        alert(data.message);
+        spinner.style.display = "none";
+        message.textContent = "Image resized and uploaded successfully!";
+    } else if ( !bucket || !key) {
+        console.error("Bucket or key is not defined. Cannot display resized image.");
+        message.textContent = "Error: Bucket or key is not defined.";
     }
 });

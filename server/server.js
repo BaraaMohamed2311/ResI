@@ -21,23 +21,26 @@ dotenv.config();
 app.use(cors());
 app.use(express.json());
 
+
 const PORT = process.env.PORT;
 app.route("/upload_files").post(upload.single('image'),async (req, res) => {
 
   const { width, height } = req.body;
   const bucket = process.env.BUCKET_NAME;
+  console.log("Received width:", width, "height:", height, "bucket:", bucket);
   const img_file =req.file;
   // to upload tp images folder in bucket
   const key = `images/${img_file.originalname}`;
   if (!img_file || !bucket) {
     return res.status(400).send("Image or bucket name is missing");
   }
-
+  // response after uploading the image
+  const resizedKey = `resized/resized_${img_file.originalname}`;
   await UploadToS3(key,img_file, bucket, { width, height })
     .then(() => res.status(200).json({
       message: "File uploaded successfully",
       bucket: bucket,
-      key: key,
+      key: resizedKey,
     }))
     .catch(err => res.status(500).json("Error uploading file: " + err.message));
 
@@ -54,13 +57,16 @@ io.on('connection', (socket) => {
   });
 });
 
+// SNS Notification Endpoint
+app.use('/sns', express.text({ type: '*/*' }));
 app.route("/sns").post((req, res) => {
-console.log("sns req.body", req.body);
+  const requestBody = JSON.parse(req.body);
 
-const messageType = req.headers['x-amz-sns-message-type'];
+console.log("req.body['Type']" ,requestBody['Type']);
+const messageType = requestBody['Type'];
 
   if (messageType === 'SubscriptionConfirmation') {
-    const subscribeUrl = req.body.SubscribeURL;
+    const subscribeUrl = requestBody.SubscribeURL;
     console.log('Received SubscriptionConfirmation');
     console.log('Confirming subscription by visiting:', subscribeUrl);
 
@@ -74,8 +80,8 @@ const messageType = req.headers['x-amz-sns-message-type'];
       });
 
   } else if (messageType === 'Notification') {
-    const {message , success} = req.body;
-    console.log('SNS Notification received:', message);
+    const {message , success} = JSON.parse(requestBody.Message);
+    console.log('SNS Notification received:', requestBody);
 
     io.emit('snsNotification', {
       message: message ,
