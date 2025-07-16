@@ -7,7 +7,8 @@ const app = express();
 const { createServer } = require('node:http');
 const { Server } = require('socket.io');
 const upload = multer();
-const path =require("path");
+
+const axios = require('axios');
 const server = createServer(app); 
 const io = new Server(server, {
   cors: {
@@ -22,7 +23,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT;
 app.route("/upload_files").post(upload.single('image'),async (req, res) => {
-  console.log("req.body",req.body , "\n req.file", req.file);
+
   const { width, height } = req.body;
   const bucket = process.env.BUCKET_NAME;
   const img_file =req.file;
@@ -54,15 +55,35 @@ io.on('connection', (socket) => {
 });
 
 app.route("/sns").post((req, res) => {
+console.log("sns req.body", req.body);
 
-  if(req.success) {
-    io.emit('snsNotification', { message: 'image resized successfully', success:true});
+const messageType = req.headers['x-amz-sns-message-type'];
+
+  if (messageType === 'SubscriptionConfirmation') {
+    const subscribeUrl = req.body.SubscribeURL;
+    console.log('Received SubscriptionConfirmation');
+    console.log('Confirming subscription by visiting:', subscribeUrl);
+
+    // Automatically confirm the subscription
+    axios.get(subscribeUrl)
+      .then(() => {
+        console.log('Subscription confirmed');
+      })
+      .catch(err => {
+        console.error('Error confirming subscription:', err);
+      });
+
+  } else if (messageType === 'Notification') {
+    const {message , success} = req.body;
+    console.log('SNS Notification received:', message);
+
+    io.emit('snsNotification', {
+      message: message ,
+      success: success
+    });
   }
-  else{
-    io.emit('snsNotification', { message: 'image resized failed', success:false});
-  }
-  
-  
+
+  res.status(200).send();
 });
 
 server.listen(PORT, () => {

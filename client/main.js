@@ -1,10 +1,12 @@
 
-const socket = io('https://res-qk9u8y2yb-baraamohamed2311s-projects.vercel.app'); 
+const socket = io('http://localhost:5500'); 
 const widthInput = document.getElementById("width"); 
 const heightInput = document.getElementById("height"); 
 const resizeBtn = document.getElementById("resize"); 
 const uploadImg = document.getElementById("fileInput");
 const beforeImg = document.getElementById("beforeImage");
+const afterImg = document.getElementById("afterImage");
+
 let bucket = null; 
 let key = null;
 let image_file = null;
@@ -38,7 +40,7 @@ function submitForm(e, width, height , image_file) {
     formData.append("width", width);
     formData.append("height", height);
 
-    fetch("https://res-qk9u8y2yb-baraamohamed2311s-projects.vercel.app/upload_files", {
+    fetch("http://localhost:5500/upload_files", {
         method: 'POST',
         body:formData,
         mode: 'cors',
@@ -46,10 +48,8 @@ function submitForm(e, width, height , image_file) {
         .then((res) => res.json).then((data) => {
             bucket = data.bucket;
             key = data.key;
-            // Usage:
+            
 
-            getImage(bucket, `resized/${image_file.original_name}`)
-    .catch(error => console.error('Failed to get image:', error));
         })
         .catch((err) => console.log("Error occured", err));
 }
@@ -58,10 +58,11 @@ function submitForm(e, width, height , image_file) {
 socket.on('snsNotification', (data) => {
   console.log('Received SNS notification:', data);
     if (data.success) {
+        console.log(`https://${bucket}.s3.amazonaws.com/${imgPath}`);
         const resizedImageUrl = `https://${bucket}.s3.amazonaws.com/${imgPath}`;
-        alert(data.message);
-        const resizedImage = document.getElementById("resizedImage");
-        resizedImage.setAttribute("src", resizedImageUrl);
+        console.log(data.message);
+        
+        afterImg.setAttribute("src", resizedImageUrl);
     } else {
         alert(data.message);
     }
