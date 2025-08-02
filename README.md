@@ -3,6 +3,10 @@
 
 ---
 
+![Design](./Resi_Design.gif)
+
+---
+
 ## 🔧 How It Works  
 1. **Upload**: Images are uploaded to an S3 bucket.  
 2. **Trigger**: S3 event triggers a Lambda function to resize the image.  
